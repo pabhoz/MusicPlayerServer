@@ -18,6 +18,9 @@ if(isset($_GET["ejecute"])){
                 case "signup":
                     signUp();
                 break;
+                case "getMyInfo":
+                    getMyInfo();
+                break;
 			}
 		}else{
 			die("La función <b>".$_GET['ejecute']."</b> no existe");
@@ -41,7 +44,7 @@ function select(){
     
     global $db,$table;
 
-    $where = (isset($_POST["username"])) ? "username = '$_POST[username]'" : "";
+    $where = (isset($_GET["username"])) ? "username = '$_GET[username]'" : "";
 
     $fetch = $db->select("*",$table,$where);
     $fetch = ($fetch == NULL) ? [] : $fetch;
@@ -57,4 +60,21 @@ function signUp(){
 
     $fetch = $db->insert($table,$data);
     print json_encode($fetch);
+}
+
+function getMyInfo(){
+    global $db,$table;
+
+    $where =  "username = '$_GET[username]'";
+
+    $user = $db->select("id,username,email",$table,$where)[0];
+
+    $user["library"] = $db->select("songs_id as id","libraries","users_id = $user[id]");
+    foreach ($user["library"] as $key => $song) {
+        $user["library"][$key] = $db->select("*","songs","id = $song[id]")[0];
+    }
+
+    $user["playlist"] = $db->select("id,name,isPublic","playlists","owner = $user[id]");
+    
+    echo json_encode($user);
 }
